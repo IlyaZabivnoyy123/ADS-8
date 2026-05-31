@@ -7,95 +7,94 @@
 #include <vector>
 #include <utility>
 
-template<typename DataType>
+template<typename T>
 class BST {
-private:
-    struct Node {
-        DataType key;
-        int counter;
-        Node* leftBranch;
-        Node* rightBranch;
+ private:
+  struct Node {
+    T key;
+    int count;
+    Node* left;
+    Node* right;
 
-        explicit Node(DataType value) : key(value), counter(1),
-                                        leftBranch(nullptr), rightBranch(nullptr) {}
-    };
+    explicit Node(T value) : key(value), count(1), left(nullptr), right(nullptr) {}
+  };
 
-    Node* top;
+  Node* root;
 
-    void placeNode(Node** branch, DataType value) {
-        if (*branch == nullptr) {
-            *branch = new Node(value);
-            return;
-        }
-
-        if (value < (*branch)->key) {
-            placeNode(&((*branch)->leftBranch), value);
-        } else if (value > (*branch)->key) {
-            placeNode(&((*branch)->rightBranch), value);
-        } else {
-            (*branch)->counter++;
-        }
+  void add(Node** node, T value) {
+    if (*node == nullptr) {
+      *node = new Node(value);
+      return;
     }
 
-    int lookupNode(Node* branch, DataType value) const {
-        if (branch == nullptr) return 0;
-
-        if (value == branch->key) return branch->counter;
-
-        if (value < branch->key) return lookupNode(branch->leftBranch, value);
-
-        return lookupNode(branch->rightBranch, value);
+    if (value < (*node)->key) {
+      add(&((*node)->left), value);
+    } else if (value > (*node)->key) {
+      add(&((*node)->right), value);
+    } else {
+      (*node)->count++;
     }
+  }
 
-    int measureHeight(Node* branch) const {
-        if (branch == nullptr) return -1;
+  int find(Node* node, T value) const {
+    if (node == nullptr) return 0;
 
-        int leftHeight = measureHeight(branch->leftBranch);
-        int rightHeight = measureHeight(branch->rightBranch);
+    if (value == node->key) return node->count;
 
-        return (leftHeight > rightHeight ? leftHeight : rightHeight) + 1;
-    }
+    if (value < node->key) return find(node->left, value);
 
-    void gatherData(Node* branch, std::vector<std::pair<DataType, int>>* container) const {
-        if (branch == nullptr) return;
+    return find(node->right, value);
+  }
 
-        gatherData(branch->leftBranch, container);
-        container->push_back({branch->key, branch->counter});
-        gatherData(branch->rightBranch, container);
-    }
+  int getHeight(Node* node) const {
+    if (node == nullptr) return -1;
 
-    void eraseTree(Node* branch) {
-        if (branch == nullptr) return;
+    int leftHeight = getHeight(node->left);
+    int rightHeight = getHeight(node->right);
 
-        eraseTree(branch->leftBranch);
-        eraseTree(branch->rightBranch);
-        delete branch;
-    }
+    return (leftHeight > rightHeight ? leftHeight : rightHeight) + 1;
+  }
 
-public:
-    BST() : top(nullptr) {}
+  void collect(Node* node, std::vector<std::pair<T, int>>* data) const {
+    if (node == nullptr) return;
 
-    ~BST() {
-        eraseTree(top);
-    }
+    collect(node->left, data);
+    data->push_back({node->key, node->count});
+    collect(node->right, data);
+  }
 
-    void insert(DataType value) {
-        placeNode(&top, value);
-    }
+  void destroy(Node* node) {
+    if (node == nullptr) return;
 
-    int search(DataType value) const {
-        return lookupNode(top, value);
-    }
+    destroy(node->left);
+    destroy(node->right);
+    delete node;
+  }
 
-    int depth() const {
-        return measureHeight(top);
-    }
+ public:
+  BST() : root(nullptr) {}
 
-    std::vector<std::pair<DataType, int>> getData() const {
-        std::vector<std::pair<DataType, int>> result;
-        gatherData(top, &result);
-        return result;
-    }
+  ~BST() {
+    destroy(root);
+  }
+
+  void insert(T value) {
+    add(&root, value);
+  }
+
+  int search(T value) const {
+    return find(root, value);
+  }
+
+  int depth() const {
+    return getHeight(root);
+  }
+
+  std::vector<std::pair<T, int>> getData() const {
+    std::vector<std::pair<T, int>> result;
+    collect(root, &result);
+    return result;
+  }
 };
 
 #endif  // INCLUDE_BST_H_
